@@ -5,11 +5,12 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
-import java.util.*;
+import java.util.Date;
+import java.util.Properties;
+import java.util.StringTokenizer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.lang.model.element.NestingKind;
 import javax.mail.Authenticator;
 import javax.mail.Message;
 import javax.mail.MessagingException;
@@ -29,7 +30,6 @@ import org.apache.http.impl.client.BasicResponseHandler;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 import com.jadecross.util.DateUtil;
@@ -56,7 +56,6 @@ public class JadeSendMail {
 
         StringTokenizer st = new StringTokenizer(args[0], ",");
 
-
         String url = null;
         String searchKeywords = args[0];
         String searchKeyWord = null;
@@ -64,10 +63,6 @@ public class JadeSendMail {
         String searchResult = "";
         String fromDate = null;
         String toDate = null;
-
-
-
-
         if (args[2].matches("한달")) {
             fromDate = DateUtil.getFromDate("yyyy/MM/dd");
             toDate = DateUtil.getToday("yyyy/MM/dd");
@@ -96,7 +91,6 @@ public class JadeSendMail {
             srchFd = "tt";
         }
 
-
         // 메일 Header 설정
 
         printHead(searchKeywords, searchTerm, srchFd);
@@ -110,8 +104,6 @@ public class JadeSendMail {
 
                     url = smt.makeURLMonthly(smt.urlEncode(searchKeyWord), fromDate, toDate);
                     searchResult = searchResult + smt.requestSearch(url, args[2]);
-
-
                 } else {
                     url = smt.makeURLDaily(smt.urlEncode(searchKeyWord), fromDate, toDate, srchFd);
                     searchResult = searchResult + "검색키워드 :<font color='red'> <b>" + searchKeyWord + "</b></font>";
@@ -119,6 +111,7 @@ public class JadeSendMail {
                     searchResult = searchResult + "<br><br> URL = ";
                     searchResult = searchResult + "<a href=\"" + url + "\">" + url + "</a>";
                     searchResult = searchResult + "<br><br>";
+
                     searchResult = searchResult + "<table border='3'>";
 
                     HttpClient httpClient = new DefaultHttpClient();
@@ -276,16 +269,12 @@ public class JadeSendMail {
                 + "&fromBidDt=" + fromDate + "&toBidDt=" + toDate
                 + "&fromOpenBidDt=&toOpenBidDt=&radOrgan=1&instNm=&area=&regYn=Y&bidSearchType=1&searchType=1";
 
-		//System.out.println("##################################");
-		//System.out.println(url);
-		//System.out.println("##################################");
+//		System.out.println("##################################");
+//		System.out.println(url);
+//		System.out.println("##################################");
 
         return url;
-
     }
-
-
-
 
     public String makeURLDaily(String search, String fromDate, String toDate, String srchFd) {
         String url = "https://www.g2b.go.kr:8340/body.do?&kwd=" + search + "&category=GG" + "&subCategory=ALL"
@@ -341,38 +330,15 @@ public class JadeSendMail {
                     if (period.matches("한달")) {
                         Elements title = doc.select("th");
                         Elements rows = doc.select("tbody");
-                        Elements trs = doc.select("tr");
 
-                        String tbody = "";
-                        for (Element tr : trs){
-                            Elements links = tr.select("td a");
-                            String href = "";
-                            for (Element link : links) {
-                                href = link.attr("href");
-                            }
+//						System.out.println(title.toString());
+//						System.out.println(rows.toString());
 
-                            String budget = "";
-
-                            if(links.size() ==0){
-                                tr.append("<th>배정예산</th>");
-
-                            } else {
-                                budget = getBudget2(href);
-                            }
-
-                            tr.append("<td>" + budget +"</td>");
-
-                            tbody = tbody + tr.toString();
-                        }
-
-
-//                        String retVal = "<br>" + title.toString() + rows.toString() +"<br>";
-                        String retVal = "<tbody>"+tbody+"</tbody>";
-                        return retVal;
+                        return "<br>" + title.toString() + rows.toString() + "<br>";
                     }
                     Elements contents = doc.select("html");
 
-                    return contents.toString();
+                    return "<br> " + contents.toString() + "<br>";
                 }
             });
         } catch (ClientProtocolException e) {
@@ -381,39 +347,6 @@ public class JadeSendMail {
             e.printStackTrace();
         }
         return content;
-    }
-
-    private static String getBudget(String href) {
-        String budget = "";
-        try {
-            Document doc1 = Jsoup.connect(href).get();
-            Elements contents1 = doc1.select(".tb_inner");
-            Element desiredContent = contents1.get(42);
-            budget = desiredContent.text();
-        }catch (Exception e){
-           //e.printStackTrace();
-        }
-        return budget;
-    }
-
-    private static String getBudget2(String href) {
-        String budget = "";
-        try {
-            Document doc1 = Jsoup.connect(href).get();
-            Elements ths = doc1.select("th");
-            for (Element th : ths){
-                if(th.text().equals("배정예산") == true){
-                    budget = "";
-                    Elements contents1 = th.parent().select(".tb_inner");
-                    if(contents1 != null && contents1.size() ==1){
-                        budget = contents1.text();
-                    }
-                }
-            }
-        }catch (Exception e){
-            //e.printStackTrace();
-        }
-        return budget;
     }
 
     public boolean sendEmail(String content, String searchKeywords, String recipients, String term, String srchFd)
