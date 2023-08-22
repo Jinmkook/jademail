@@ -439,6 +439,7 @@ public class JadeSendMail {
                 msg.addRecipient(Message.RecipientType.TO,
                         new InternetAddress(stRecipiants.nextToken() + "@jadecross.com"));
             }
+
             msg.setFrom(from);
             if (term.matches("한달")) {
                 msg.setSubject("[제이드크로스] 오늘의 나라장터 검색메일입니다.", "UTF-8");
